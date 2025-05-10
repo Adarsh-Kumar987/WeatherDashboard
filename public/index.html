@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #6dd5fa, #2980b9);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            transition: background 0.5s ease;
+        }
+        body.dark-mode {
+            background: linear-gradient(to right, #2c3e50, #34495e);
+        }
+        .app {
+            max-width: 800px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background 0.5s ease;
+        }
+        .app.dark-mode {
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        }
+        h1 {
+            transition: color 0.5s ease;
+            color: #fff;
+        }
+        h1.dark-mode{
+            color: #fff;
+        }
+        .search-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            padding: 12px;
+            width: 60%;
+            border: none;
+            border-radius: 5px 0 0 5px;
+            font-size: 1em;
+            transition: box-shadow 0.3s ease;
+            color: #333;
+        }
+        .search-box input:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        .search-box button {
+            padding: 12px 15px;
+            background: #ffffff33;
+            border: none;
+            color: white;
+            border-radius: 0 5px 5px 0;
+            margin-left: 0;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .search-box button:hover {
+            background: #ffffff55;
+            transform: scale(1.05);
+        }
+        .weather-box {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: left;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: background 0.5s ease;
+            color: #fff;
+        }
+        .weather-box.dark-mode {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #eee;
+        }
+        .weather-box h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            transition: color 0.5s ease;
+            color: #fff;
+        }
+        .weather-box h2.dark-mode{
+            color: #fff;
+        }
+        .weather-box p {
+            margin-bottom: 10px;
+            transition: color 0.5s ease;
+            color: #fff;
+        }
+        .weather-box p.dark-mode{
+            color: #eee;
+        }
+        #forecastContainer {
+            display: flex;
+            overflow-x: auto;
+            margin-top: 20px;
+            padding-bottom: 10px;
+        }
+        .forecast-item {
+            flex: 0 0 auto;
+            width: 150px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-right: 10px;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9em;
+            transition: background 0.3s ease, transform 0.3s ease;
+            color: #fff;
+            backdrop-filter: blur(5px);
+        }
+        .forecast-item.dark-mode {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #eee;
+        }
+        .forecast-item:hover {
+            transform: scale(1.05);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .chart-container {
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: background 0.5s ease;
+            backdrop-filter: blur(10px);
+        }
+        .chart-container.dark-mode {
+             background-color: rgba(0, 0, 0, 0.3);
+        }
+        canvas {
+            width: 100%;
+            height: 300px;
+        }
+        .favorites-container {
+            margin-top: 20px;
+            text-align: left;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: background 0.5s ease;
+            backdrop-filter: blur(10px);
+            color: #fff;
+        }
+        .favorites-container.dark-mode{
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #eee;
+        }
+
+        .favorites-container h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            transition: color 0.5s ease;
+            color: #fff;
+        }
+        .favorites-container h3.dark-mode{
+            color: #eee;
+        }
+        .favorites-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .favorite-city {
+            background-color: #ffffff33;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            font-size: 0.9em;
+            border: none;
+        }
+        .favorite-city:hover {
+            background-color: #ffffff55;
+            transform: scale(1.1);
+        }
+        .remove-favorite {
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            color: #ff6b6b;
+            border: none;
+            background: none;
+            padding: 0;
+            transition: color 0.3s ease;
+        }
+        .remove-favorite:hover {
+            color: #ff4757;
+        }
+        .toggle-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        @media (max-width: 768px) {
+            .search-box {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box input,
+            .search-box button {
+                width: 100%;
+                border-radius: 5px;
+                margin-bottom: 5px;
+            }
+            .search-box button {
+                margin-left: 0;
+            }
+            .forecast-item {
+                width: 45%;
+                margin-right: 10px;
+            }
+            #forecastContainer {
+                overflow-x: scroll;
+                display: flex;
+            }
+        }
+        @media (max-width: 480px) {
+            .app {
+                padding: 15px;
+            }
+            .weather-box {
+                padding: 15px;
+                font-size: 1em;
+            }
+            .forecast-item {
+                width: 90%;
+            }
+            h1{
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <h1>Weather Dashboard</h1>
+        <div class="toggle-container">
+            <label class="toggle-switch">
+                <input id="darkModeToggle" type="checkbox">
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <div class="search-box">
+            <input id="cityInput" type="text" placeholder="Enter city..." />
+            <button id="searchBtn">Search</button>
+        </div>
+        <div id="weatherDisplay" class="weather-box"></div>
+        <div id="forecastContainer" class="forecast-container">
+            </div>
+        <div class="chart-container">
+            <canvas id="temperatureChart"></canvas>
+        </div>
+        <div class="favorites-container">
+            <h3>Favorite Cities</h3>
+            <div id="favoritesList" class="favorites-list">
+            </div>
+        </div>
+    </div>
+    <script>
+        const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your actual API key
+        const cityInput = document.getElementById('cityInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const weatherDisplay = document.getElementById('weatherDisplay');
+        const forecastContainer = document.getElementById('forecastContainer');
+        const temperatureChartCanvas = document.getElementById('temperatureChart').getContext('2d');
+        const favoritesList = document.getElementById('favoritesList');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+        const app = document.querySelector('.app');
+        let temperatureChart;
+        let isDarkMode = false;
+
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            isDarkMode = true;
+        }
+        darkModeToggle.checked = isDarkMode;
+        toggleDarkMode(isDarkMode);
+
+        darkModeToggle.addEventListener('change', () => {
+            isDarkMode = !isDarkMode;
+            toggleDarkMode(isDarkMode);
+            localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+        });
+
+        function toggleDarkMode(enabled) {
+            body.classList.toggle('dark-mode', enabled);
+            app.classList.toggle('dark-mode', enabled);
+            weatherDisplay.classList.toggle('dark-mode', enabled);
+            document.querySelectorAll('.forecast-item').forEach(item => item.classList.toggle('dark-mode', enabled));
+            document.querySelectorAll('.favorite-city').forEach(item => item.classList.toggle('dark-mode', enabled));
+            document.querySelector('h1').classList.toggle('dark-mode', enabled);
+            document.querySelector('.favorites-container').classList.toggle('dark-mode', enabled);
+            if(weatherDisplay.querySelector('h2')){
+                weatherDisplay.querySelector('h2').classList.toggle('dark-mode', enabled);
+            }
+            if(weatherDisplay.querySelector('p')){
+                weatherDisplay.querySelectorAll('p').forEach(p=> p.classList.toggle('dark-mode', enabled));
+            }
+            if (temperatureChart) {
+                temperatureChart.destroy();
+                createTemperatureChart([], []);
+            }
+        }
+
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        updateFavoritesList();
+
+        searchBtn.addEventListener('click', () => {
+            const city = cityInput.value.trim();
+            if (!city) {
+                alert('Please enter a city name.');
+                return;
+            }
+            getWeatherData(city);
+        });
+
+        function getWeatherData(city) {
+            fetch(`/api/weather?city=${encodeURIComponent(city)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        weatherDisplay.innerHTML = `<p class="error-message">${data.error}</p>`;
+                        forecastContainer.innerHTML = '';
+                        if (temperatureChart) {
+                            temperatureChart.destroy();
+                        }
+                        return;
+                    }
+                    displayWeatherData(data);
+                    getForecastData(city);
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    weatherDisplay.innerHTML = '<p class="error-message">Error fetching data. Please try again.</p>';
+                    forecastContainer.innerHTML = '';
+                    if (temperatureChart) {
+                        temperatureChart.destroy();
+                    }
+                });
+        }
+
+        function displayWeatherData(data) {
+            weatherDisplay.innerHTML = `
+                <h2>${data.name}, ${data.sys.country}</h2>
+                <p><strong>${data.weather[0].main}:</strong> ${data.weather[0].description}</p>
+                <p>🌡️ Temp: ${data.main.temp}°C</p>
+                <p>💨 Wind: ${data.wind.speed} m/s</p>
+                <p>💧 Humidity: ${data.main.humidity}%</p>
+                <button id="addFavorite" class="favorite-button">Add to Favorites</button>
+            `;
+            const addToFavoritesButton = document.getElementById('addFavorite');
+            addToFavoritesButton.addEventListener('click', () => {
+                if (!favorites.find(fav => fav.name === data.name)) {
+                    favorites.push({ name: data.name, lat: data.coord.lat, lon: data.coord.lon });
+                    localStorage.setItem('favorites', JSON.stringify(favorites));
+                    updateFavoritesList();
+                    alert(`${data.name} added to favorites!`);
+                } else {
+                    alert(`${data.name} is already in your favorites!`);
+                }
+            });
+        }
+
+        function getForecastData(city) {
+            fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error("Error fetching forecast data", data.error);
+                        forecastContainer.innerHTML = `<p class="error-message">Error fetching forecast data.</p>`;
+                        return;
+                    }
+                    displayForecastData(data.list);
+                    const dailyTemperatures = extractDailyTemperatures(data.list);
+                    const dailyDates = extractDailyDates(data.list);
+                    createTemperatureChart(dailyDates, dailyTemperatures);
+                })
+                .catch(error => {
+                    console.error('Error fetching forecast data:', error);
+                    forecastContainer.innerHTML = '<p class="error-message">Error fetching forecast data. Please try again.</p>';
+                });
+        }
+
+        function displayForecastData(forecastList) {
+            forecastContainer.innerHTML = '';
+            const dailyForecasts = {};
+            forecastList.forEach(item => {
+                const date = item.dt_txt.split(' ')[0];
+                if (!dailyForecasts[date]) {
+                    dailyForecasts[date] = {
+                        minTemp: item.main.temp_min,
+                        maxTemp: item.main.temp_max,
+                        weather: item.weather[0].main,
+                        icon: item.weather[0].icon
+                    };
+                } else {
+                    dailyForecasts[date].minTemp = Math.min(dailyForecasts[date].minTemp, item.main.temp_min);
+                    dailyForecasts[date].maxTemp = Math.max(dailyForecasts[date].maxTemp, item.main.temp_max);
+                }
+            });
+
+            for (const date in dailyForecasts) {
+                const forecast = dailyForecasts[date];
+                const forecastItem = document.createElement('div');
+                forecastItem.className = 'forecast-item';
+                if(isDarkMode){
+                    forecastItem.classList.add('dark-mode')
+                }
+                forecastItem.innerHTML = `
+                    <p>${date}</p>
+                    <p><img src="https://openweathermap.org/img/wn/${forecast.icon}.png" alt="${forecast.weather}"></p>
+                    <p><strong>${forecast.weather}</strong></p>
+                    <p>Min: ${forecast.minTemp}°C</p>
+                    <p>Max: ${forecast.maxTemp}°C</p>
+                `;
+                forecastContainer.appendChild(forecastItem);
+            }
+        }
+
+        function extractDailyTemperatures(forecastList) {
+            const dailyTemperatures = {};
+            forecastList.forEach(item => {
+                const date = item.dt_txt.split(' ')[0];
+                if (!dailyTemperatures[date]) {
+                    dailyTemperatures[date] = (item.main.temp_min + item.main.temp_max) / 2;
+                } else {
+                    dailyTemperatures[date] = (dailyTemperatures[date] + item.main.temp_min + item.main.temp_max) / 3;
+                }
+            });
+            return Object.values(dailyTemperatures);
+        }
+
+        function extractDailyDates(forecastList) {
+            const dailyDates = {};
+             forecastList.forEach(item => {
+                const date = item.dt_txt.split(' ')[0];
+                 dailyDates[date] = date;
+             });
+            return Object.keys(dailyDates);
+        }
+
+        function createTemperatureChart(dates, temperatures) {
+            temperatureChart = new Chart(temperatureChartCanvas, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: temperatures,
+                        borderColor: isDarkMode ? '#eee' : '#2196f3',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 5,
+                        pointBackgroundColor: isDarkMode? '#eee' : '#2196f3',
+                        pointHoverRadius: 7,
+                        pointHoverBackgroundColor: isDarkMode ? '#fff': '#3b82f6',
+                        fill: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Date',
+                                color: isDarkMode? '#eee': '#333'
+                            },
+                            ticks: {
+                                font: {
+                                    color: isDarkMode? '#eee': '#666'
+                                }
+                            },
+                            grid: {
+                                color: isDarkMode? '#444': '#e0e0e0'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)',
+                                color: isDarkMode? '#eee': '#333'
+                            },
+                            ticks: {
+                                font: {
+                                    color: isDarkMode? '#eee': '#666'
+                                }
+                            },
+                            grid: {
+                                color: isDarkMode? '#444': '#e0e0e0'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false,
+                            labels: {
+                                fontColor: isDarkMode? '#eee': '#333'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateFavoritesList() {
+            favoritesList.innerHTML = '';
+            favorites.forEach(city => {
+                const cityElement = document.createElement('button');
+                cityElement.className = 'favorite-city';
+                if(isDarkMode){
+                    cityElement.classList.add('dark-mode')
+                }
+                cityElement.textContent = city.name;
+                const removeButton = document.createElement('button');
+                removeButton.className = 'remove-favorite';
+                removeButton.textContent = 'x';
+                removeButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    favorites = favorites.filter(fav => fav.name !== city.name);
+                    localStorage.setItem('favorites', JSON.stringify(favorites));
+                    updateFavoritesList();
+                });
+                cityElement.appendChild(removeButton);
+                cityElement.addEventListener('click', () => {
+                    getWeatherData(city.name);
+                });
+                favoritesList.appendChild(cityElement);
+            });
+        }
+    </script>
+</body>
+</html>
